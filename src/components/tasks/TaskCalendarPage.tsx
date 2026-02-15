@@ -20,9 +20,15 @@ export function TaskCalendarPage({
   const [selectedDate, setSelectedDate] = useState(new Date());
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
+    <div className="space-y-6">
+      <CalendarView
+        goals={goals}
+        tasks={tasks}
+        selectedDate={selectedDate}
+        onSelectDate={setSelectedDate}
+      />
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-3">
           <CardTitle className="text-base">
             {format(selectedDate, "EEEE, MMMM d, yyyy")}
           </CardTitle>
@@ -35,12 +41,6 @@ export function TaskCalendarPage({
           />
         </CardContent>
       </Card>
-      <CalendarView
-        goals={goals}
-        tasks={tasks}
-        selectedDate={selectedDate}
-        onSelectDate={setSelectedDate}
-      />
     </div>
   );
 }

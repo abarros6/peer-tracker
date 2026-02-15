@@ -45,8 +45,8 @@ export function CalendarView({
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-base">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+        <CardTitle className="text-lg">
           {format(currentMonth, "MMMM yyyy")}
         </CardTitle>
         <div className="flex gap-1">
@@ -68,8 +68,8 @@ export function CalendarView({
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-7 gap-1 text-center">
-          {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
-            <div key={d} className="py-1 text-xs font-medium text-muted-foreground">
+          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+            <div key={d} className="py-2 text-sm font-medium text-muted-foreground">
               {d}
             </div>
           ))}
@@ -86,25 +86,35 @@ export function CalendarView({
                 key={day.toISOString()}
                 onClick={() => onSelectDate(day)}
                 className={cn(
-                  "relative flex h-9 w-full items-center justify-center rounded-md text-sm transition-colors",
-                  !inMonth && "text-muted-foreground/40",
+                  "relative flex aspect-square w-full flex-col items-center justify-center rounded-lg text-sm transition-colors",
+                  !inMonth && "text-muted-foreground/30",
                   inMonth && "hover:bg-accent",
                   selected && "bg-primary text-primary-foreground hover:bg-primary",
-                  isToday(day) && !selected && "font-bold"
+                  isToday(day) && !selected && "ring-2 ring-primary/30 font-bold"
                 )}
               >
                 {format(day, "d")}
                 {completion && inMonth && (
-                  <span
-                    className={cn(
-                      "absolute bottom-0.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full",
-                      allDone
-                        ? "bg-green-500"
-                        : someDone
-                          ? "bg-yellow-500"
-                          : "bg-muted-foreground/30"
+                  <div className="mt-0.5 flex items-center gap-0.5">
+                    <span
+                      className={cn(
+                        "h-1.5 w-1.5 rounded-full",
+                        allDone
+                          ? "bg-green-500"
+                          : someDone
+                            ? "bg-yellow-500"
+                            : "bg-muted-foreground/30"
+                      )}
+                    />
+                    {completion.total > 1 && (
+                      <span className={cn(
+                        "text-[9px] leading-none",
+                        selected ? "text-primary-foreground/70" : "text-muted-foreground"
+                      )}>
+                        {completion.completed}/{completion.total}
+                      </span>
                     )}
-                  />
+                  </div>
                 )}
               </button>
             );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { signUp } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export default function SignupPage() {
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next");
+
   const [state, formAction, pending] = useActionState(
     async (_prev: { error: string } | null, formData: FormData) => {
       const result = await signUp(formData);
@@ -24,6 +28,7 @@ export default function SignupPage() {
         <CardDescription>Start tracking your goals with friends</CardDescription>
       </CardHeader>
       <form action={formAction}>
+        {next && <input type="hidden" name="next" value={next} />}
         <CardContent className="space-y-4">
           {state?.error && (
             <p className="text-sm text-destructive">{state.error}</p>
@@ -47,7 +52,10 @@ export default function SignupPage() {
           </Button>
           <p className="text-sm text-muted-foreground">
             Already have an account?{" "}
-            <Link href="/login" className="text-primary underline">
+            <Link
+              href={next ? `/login?next=${encodeURIComponent(next)}` : "/login"}
+              className="text-primary underline"
+            >
               Sign in
             </Link>
           </p>

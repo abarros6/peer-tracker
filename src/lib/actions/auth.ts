@@ -16,7 +16,17 @@ const signInSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
+// Only allow relative paths starting with /
+function sanitizeRedirect(next: string | null): string {
+  if (next && next.startsWith("/") && !next.startsWith("//")) {
+    return next;
+  }
+  return "/dashboard";
+}
+
 export async function signUp(formData: FormData) {
+  const next = sanitizeRedirect(formData.get("next") as string | null);
+
   const parsed = signUpSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
@@ -41,10 +51,12 @@ export async function signUp(formData: FormData) {
   }
 
   revalidatePath("/", "layout");
-  redirect("/dashboard");
+  redirect(next);
 }
 
 export async function signIn(formData: FormData) {
+  const next = sanitizeRedirect(formData.get("next") as string | null);
+
   const parsed = signInSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
@@ -65,7 +77,7 @@ export async function signIn(formData: FormData) {
   }
 
   revalidatePath("/", "layout");
-  redirect("/dashboard");
+  redirect(next);
 }
 
 export async function signOut() {

@@ -2,103 +2,201 @@
 
 ## Commands
 
-- `npm run dev` — Start development server
+- `npm run dev` — Start development server (Turbopack)
 - `npm run build` — Production build
 - `npm run lint` — Run ESLint
 - `npx tsc --noEmit` — Type-check without emitting
 
+## Tech Stack
+
+- **Next.js 16** (App Router, Server Components, Server Actions)
+- **React 19** (useActionState, useOptimistic)
+- **Supabase** (Postgres + Auth + RLS) via `@supabase/ssr`
+- **Tailwind CSS v4** + **shadcn/ui** components
+- **Zod v4** (validation — uses `.issues` not `.errors` for error access)
+- **Libraries**: nanoid, date-fns, lucide-react, sonner
+
 ## Project Structure
 
-- `src/app/(auth)/` — Unauthenticated routes (login, signup)
-- `src/app/(app)/` — Authenticated routes (dashboard, goals, friends, settings)
-- `src/app/invite/[code]/` — Public invite acceptance page
-- `src/components/ui/` — shadcn/ui primitives (do not edit manually)
-- `src/components/` — Feature components grouped by domain (goals/, tasks/, friends/, dashboard/, layout/)
-- `src/lib/supabase/` — Supabase client factories (server, browser, middleware)
-- `src/lib/actions/` — Server Actions for all mutations
-- `src/lib/queries/` — Data fetching functions used by Server Components
-- `src/lib/utils/` — Pure utility functions (dates, streaks, invite codes)
-- `src/types/` — TypeScript types (database schema types, app-level types)
-- `supabase/migrations/` — Versioned SQL migration files
-- `middleware.ts` — Auth session refresh and route protection
+```
+peer-tracker/
+├── middleware.ts                        # Auth session refresh + route protection + ?next= redirect
+├── supabase/migrations/                 # SQL migrations (run via Supabase SQL Editor)
+├── src/
+│   ├── app/
+│   │   ├── layout.tsx                   # Root layout (fonts, metadata)
+│   │   ├── page.tsx                     # Redirects to /dashboard
+│   │   ├── (auth)/                      # Unauthenticated layout (wrapped in Suspense for useSearchParams)
+│   │   │   ├── layout.tsx               # Centered card + Suspense boundary
+│   │   │   ├── login/page.tsx           # Supports ?next= redirect param
+│   │   │   └── signup/page.tsx          # Supports ?next= redirect param
+│   │   ├── (app)/                       # Authenticated layout (sidebar, nav, user menu)
+│   │   │   ├── layout.tsx               # Fetches profile, renders sidebar/nav
+│   │   │   ├── loading.tsx              # Skeleton loading state
+│   │   │   ├── error.tsx                # Error boundary
+│   │   │   ├── dashboard/page.tsx       # Overview stats, today's tasks, streak cards
+│   │   │   ├── goals/page.tsx           # Tabs: Calendar view + Manage Goals
+│   │   │   ├── friends/page.tsx         # Friend list + invite generator
+│   │   │   ├── friends/[id]/page.tsx    # Friend detail + confirmations
+│   │   │   └── settings/page.tsx        # Profile settings form
+│   │   ├── auth/callback/route.ts       # OAuth/magic link callback
+│   │   └── invite/[code]/page.tsx       # Public invite acceptance (server component, checks auth)
+│   ├── components/
+│   │   ├── ui/                          # shadcn/ui primitives (do not edit manually)
+│   │   ├── layout/                      # Sidebar, MobileNav, UserMenu
+│   │   ├── goals/                       # GoalForm, GoalCard, GoalList
+│   │   ├── tasks/                       # TaskCheckbox, DailyChecklist, CalendarView, TaskCalendarPage
+│   │   ├── friends/                     # FriendCard, InviteGenerator, AcceptInviteButton, ConfirmButton, FriendProgress
+│   │   ├── dashboard/                   # OverviewStats, StreakCard
+│   │   └── settings/                    # SettingsForm
+│   ├── lib/
+│   │   ├── supabase/                    # Client factories: server.ts, browser.ts, middleware.ts
+│   │   ├── actions/                     # Server Actions: auth, goals, tasks, friends, confirmations, profile
+│   │   ├── queries/                     # Data fetching: auth, goals, tasks, friends, confirmations
+│   │   ├── utils/                       # days.ts (recurrence), streaks.ts (streak calc)
+│   │   └── utils.ts                     # cn() helper from shadcn
+│   └── types/
+│       └── database.ts                  # Supabase Database type (hand-written, matches migration)
+```
+
+## Existing Server Actions
+
+| File | Functions |
+|------|-----------|
+| `actions/auth.ts` | `signUp`, `signIn`, `signOut` — auth actions support `next` hidden field for post-auth redirect |
+| `actions/goals.ts` | `createGoal`, `updateGoal`, `archiveGoal`, `restoreGoal` |
+| `actions/tasks.ts` | `toggleTask` |
+| `actions/friends.ts` | `createInvite`, `acceptInvite`, `removeFriend` |
+| `actions/confirmations.ts` | `confirmTask`, `removeConfirmation` |
+| `actions/profile.ts` | `updateProfile` |
+
+## Existing Query Functions
+
+| File | Functions |
+|------|-----------|
+| `queries/auth.ts` | `getCurrentUser`, `getCurrentProfile` |
+| `queries/goals.ts` | `getGoals`, `getGoalById`, `getArchivedGoals` |
+| `queries/tasks.ts` | `getTasksForMonth`, `getTasksForDateRange` |
+| `queries/friends.ts` | `getFriends` |
+| `queries/confirmations.ts` | `getConfirmationsForTasks` |
+
+## Known Bugs
+
+### Invite flow broken — "invalid header value" error
+- **Symptom**: After signing up/logging in via an invite link (`/invite/[code]`), the user gets an error: `Headers.append: "Bearer eyJ..." is an invalid header value`
+- **Where**: Happens during the Supabase auth token being set in headers after login redirect
+- **Likely cause**: The `?next=/invite/[code]` redirect after auth may have a timing issue where the auth session isn't fully established before the invite page tries to use it. Or there's a cookie/header encoding issue with the token.
+- **To reproduce**: Generate invite link → open in same browser (logged out) → sign up with `?next=/invite/...` → error after redirect
+- **Status**: Not yet fixed. Needs debugging of the auth redirect + session establishment flow.
 
 ## Conventions
 
 ### Components
 
 - Server Components by default. Only add `'use client'` to interactive leaf components that need browser APIs, hooks, or event handlers.
-- Colocate component files with their feature directory (e.g., goal-related components go in `src/components/goals/`).
-- Use shadcn/ui primitives from `src/components/ui/` for all base UI elements (Button, Card, Dialog, Input, etc.).
+- Colocate component files with their feature directory (e.g., goal-related components in `src/components/goals/`).
+- Use shadcn/ui primitives from `src/components/ui/` for all base UI elements.
 
 ### Supabase Clients
 
-Three client factories exist in `src/lib/supabase/`. Always use the correct one:
+Three client factories in `src/lib/supabase/`. Always use the correct one:
 
 - **`server.ts`** — For Server Components and Server Actions. Uses `cookies()` from `next/headers`.
-- **`browser.ts`** — For Client Components. Singleton instance, no cookie access.
+- **`browser.ts`** — For Client Components. Creates a new client per call.
 - **`middleware.ts`** — For `middleware.ts` only. Uses `request`/`response` cookie API.
 
 Never import the browser client in server code or vice versa.
 
 ### Data Mutations
 
-- All data mutations go through **Server Actions** in `src/lib/actions/`.
-- No API routes (`route.ts`) for CRUD operations.
-- Validate inputs with **zod** schemas at the top of each action.
-- Server Actions should call `revalidatePath()` after mutations to refresh cached data.
+- All mutations go through **Server Actions** in `src/lib/actions/`.
+- No API routes (`route.ts`) for CRUD — only `auth/callback/route.ts` exists for OAuth.
+- Validate inputs with **zod v4** schemas. Access errors via `.issues[0].message` (not `.errors`).
+- Call `revalidatePath()` after mutations.
 
 ### Data Fetching
 
-- Server Components fetch data using functions from `src/lib/queries/`.
+- Server Components call functions from `src/lib/queries/`.
 - Query functions create their own Supabase server client internally.
-- Never pass the Supabase client as a parameter to query functions.
+- Never pass the Supabase client as a parameter.
 
 ### Lazy Task Generation
 
-- Task rows in the `tasks` table are **not** pre-populated.
-- A task row is created only when the user first interacts with it (e.g., toggling a checkbox).
-- The calendar UI renders checkboxes based on the goal's recurrence settings. If no task row exists for a date, it shows as incomplete.
-- On toggle: upsert a task row with `completed = true` and the date. On un-toggle: set `completed = false` (keep the row).
+- Task rows are **not** pre-populated.
+- Created on first toggle via upsert (`onConflict: "goal_id,date"`).
+- Calendar UI renders checkboxes from goal recurrence; missing task row = incomplete.
+- Un-toggle sets `completed = false` (keeps the row).
 
 ### Friendship Canonical Ordering
 
-- The `friendships` table stores pairs with the constraint `user_a < user_b` (UUID comparison).
-- When inserting or querying friendships, always sort the two user IDs and assign the smaller one to `user_a` and the larger to `user_b`.
-- A Postgres helper function `are_friends(uuid, uuid)` is used in RLS policies to gate cross-user data access.
+- `friendships` table: constraint `user_a < user_b` (UUID comparison).
+- Always sort IDs before insert/query: `const [userA, userB] = a < b ? [a, b] : [b, a]`.
+- `are_friends(uuid, uuid)` Postgres function gates cross-user reads in RLS.
 
 ### Invite System
 
-- Invite codes are generated with `nanoid` (8 characters).
-- Invites expire after 7 days and are single-use.
-- The invite acceptance page is a public route at `/invite/[code]`.
+- Codes generated with `nanoid(8)`, expire after 7 days, single-use.
+- Public acceptance page at `/invite/[code]` — server component that checks auth.
+- If not logged in: shows "Create an account" / "Sign in" buttons with `?next=/invite/[code]`.
+- If logged in: shows "Accept Invite" button via `AcceptInviteButton` client component.
+- Auth actions (`signIn`, `signUp`) read a `next` hidden form field and redirect there after auth.
+- Middleware also respects `?next=` param when redirecting authenticated users away from `/login` or `/signup`.
 
 ### Optimistic UI
 
-- Use `useOptimistic` from React for instant feedback on task toggling.
-- The Server Action runs in the background; if it fails, the UI reverts.
+- `useOptimistic` + `useTransition` for task toggles and confirmations.
+- Toast errors on failure via `sonner`.
 
 ### Row Level Security
 
-- Every table has RLS policies enabled.
-- Users can read/write their own data.
-- Cross-user reads (viewing friend progress) are gated by the `are_friends()` database function.
-- Never bypass RLS with the service role key in client-facing code.
+- Every table has RLS enabled.
+- Own data: `auth.uid() = user_id` policies.
+- Friend data: gated by `are_friends()` function.
+- Never use the service role key in client-facing code.
+
+### Database Types
+
+- Hand-written in `src/types/database.ts` to match the migration.
+- Each table needs `Row`, `Insert`, `Update`, and `Relationships` fields (required by `@supabase/supabase-js`).
+- Update this file whenever the migration changes.
 
 ### Styling
 
-- Use Tailwind CSS utility classes for all styling.
-- Follow the shadcn/ui theming system (CSS variables in `globals.css`).
-- Mobile-first responsive design.
-
-### TypeScript
-
-- Strict mode enabled.
-- Database types are generated from Supabase schema into `src/types/database.ts`.
-- Regenerate types after migration changes with `npx supabase gen types typescript --local > src/types/database.ts`.
-- Define app-level types (derived/composed from DB types) in `src/types/`.
+- Tailwind CSS v4 utility classes.
+- shadcn/ui theming via CSS variables in `globals.css`.
+- Mobile-first responsive design. Bottom nav on mobile, sidebar on desktop.
 
 ### File Naming
 
 - Components: `PascalCase.tsx` (e.g., `GoalCard.tsx`)
-- Non-component modules: `kebab-case.ts` (e.g., `streak-calc.ts`)
-- Server Actions: group by domain in `src/lib/actions/` (e.g., `goals.ts`, `tasks.ts`, `friends.ts`)
+- Non-component modules: `kebab-case.ts` or `camelCase.ts`
+- Server Actions: grouped by domain in `src/lib/actions/`
+
+### ESLint
+
+- Underscore-prefixed vars (`_prev`, `_formData`) are allowed unused (configured in `eslint.config.mjs`).
+
+## Database Migration
+
+Single migration file: `supabase/migrations/00001_initial_schema.sql`
+
+**Order matters** — tables first, then functions, then RLS policies, then indexes. The `are_friends()` function references `friendships`, so `friendships` must be created before it.
+
+Tables: `profiles`, `goals`, `friendships`, `tasks`, `invites`, `confirmations`
+
+Run migrations via the Supabase SQL Editor (paste and run), not via CLI.
+
+## Environment Variables
+
+```
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
+
+Stored in `.env.local` (gitignored). See `.env.example` for reference.
+
+## Deployment
+
+- **Vercel**: Import from GitHub, add env vars, deploy
+- **Supabase**: After deploy, set Site URL and Redirect URLs in Authentication > URL Configuration
+- Not yet deployed — deployment was in progress when session ended
