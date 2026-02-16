@@ -6,6 +6,15 @@ import type { Database } from "@/types/database";
 type Goal = Database["public"]["Tables"]["goals"]["Row"];
 type Task = Database["public"]["Tables"]["tasks"]["Row"];
 
+const rowColors = [
+  "bg-rose-50/60 dark:bg-rose-900/10",
+  "bg-sky-50/60 dark:bg-sky-900/10",
+  "bg-amber-50/60 dark:bg-amber-900/10",
+  "bg-violet-50/60 dark:bg-violet-900/10",
+  "bg-emerald-50/60 dark:bg-emerald-900/10",
+  "bg-orange-50/60 dark:bg-orange-900/10",
+];
+
 export function DailyChecklist({
   date,
   goals,
@@ -27,19 +36,22 @@ export function DailyChecklist({
   }
 
   return (
-    <div className="space-y-3">
-      {activeGoals.map((goal) => {
+    <div className="space-y-2">
+      {activeGoals.map((goal, i) => {
         const task = tasks.find(
           (t) => t.goal_id === goal.id && t.date === dateStr
         );
         return (
-          <div key={goal.id} className="flex items-center gap-3">
+          <div
+            key={goal.id}
+            className={`flex items-center gap-3 rounded-lg px-3 py-2.5 ${rowColors[i % rowColors.length]}`}
+          >
             <TaskCheckbox
               goalId={goal.id}
               date={dateStr}
               initialCompleted={task?.completed ?? false}
             />
-            <span className="text-sm">{goal.title}</span>
+            <span className="text-sm font-medium">{goal.title}</span>
           </div>
         );
       })}

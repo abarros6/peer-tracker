@@ -16,9 +16,9 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-56 shrink-0 border-r bg-card md:block">
-      <div className="flex h-14 items-center border-b px-4">
-        <Link href="/dashboard" className="text-lg font-semibold">
+    <aside className="hidden w-56 shrink-0 border-r bg-sidebar md:block">
+      <div className="flex h-14 items-center border-b border-sidebar-border px-4">
+        <Link href="/dashboard" className="text-lg font-bold text-sidebar-foreground">
           Peer Tracker
         </Link>
       </div>
@@ -28,10 +28,10 @@ export function Sidebar() {
             key={href}
             href={href}
             className={cn(
-              "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent",
+              "flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
               pathname.startsWith(href)
-                ? "bg-accent text-accent-foreground"
-                : "text-muted-foreground"
+                ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm"
+                : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             )}
           >
             <Icon className="h-4 w-4" />

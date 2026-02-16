@@ -21,6 +21,7 @@
 ```
 peer-tracker/
 ├── middleware.ts                        # Auth session refresh + route protection + ?next= redirect
+├── public/cursors/                      # Hand-drawn cursor SVGs (arrow.svg, pointer.svg)
 ├── supabase/migrations/                 # SQL migrations (run via Supabase SQL Editor)
 ├── src/
 │   ├── app/
@@ -34,8 +35,8 @@ peer-tracker/
 │   │   │   ├── layout.tsx               # Fetches profile, renders sidebar/nav
 │   │   │   ├── loading.tsx              # Skeleton loading state
 │   │   │   ├── error.tsx                # Error boundary
-│   │   │   ├── dashboard/page.tsx       # Overview stats, today's tasks, streak cards
-│   │   │   ├── goals/page.tsx           # Tabs: Calendar view + Manage Goals
+│   │   │   ├── dashboard/page.tsx       # Calendar-first layout: compact stats, calendar hero, streaks
+│   │   │   ├── goals/page.tsx           # Calendar always visible + Manage Goals below
 │   │   │   ├── friends/page.tsx         # Friend list + invite generator
 │   │   │   ├── friends/[id]/page.tsx    # Friend detail + confirmations
 │   │   │   └── settings/page.tsx        # Profile settings form
@@ -162,6 +163,12 @@ Never import the browser client in server code or vice versa.
 
 ### Styling
 
+- **Construction paper theme** — warm pastel OKLCH palette in `globals.css`: cream backgrounds, coral primary, lavender secondary, mint accent, peach sidebar. Dark mode uses deep navy-teal/plum tones (not gray inversions).
+- Paper grain texture on body via SVG noise filter.
+- Hand-drawn cursor SVGs in `public/cursors/` (arrow.svg for default, pointer.svg for interactive elements).
+- CalendarView day cells use pastel background tints: green (all done), yellow (partial), rose (nothing done).
+- DailyChecklist rows cycle through pastel background tints.
+- `OverviewStats` has a `compact` prop for the horizontal strip layout used on the dashboard.
 - Tailwind CSS v4 utility classes.
 - shadcn/ui theming via CSS variables in `globals.css`.
 - Mobile-first responsive design. Bottom nav on mobile, sidebar on desktop.

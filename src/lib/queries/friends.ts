@@ -7,6 +7,48 @@ export type FriendWithProfile = {
   avatarUrl: string | null;
 };
 
+export async function getInviteByCode(code: string) {
+  const supabase = await createClient();
+
+  const { data: invite } = await supabase
+    .from("invites")
+    .select("id, code, inviter_id, accepted_by, expires_at")
+    .eq("code", code)
+    .single();
+
+  if (!invite) return null;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("display_name")
+    .eq("id", invite.inviter_id)
+    .single();
+
+  return {
+    invite,
+    inviterName: profile?.display_name ?? "Someone",
+  };
+}
+
+export async function areFriends(
+  userId1: string,
+  userId2: string
+): Promise<boolean> {
+  const supabase = await createClient();
+
+  const [userA, userB] =
+    userId1 < userId2 ? [userId1, userId2] : [userId2, userId1];
+
+  const { data } = await supabase
+    .from("friendships")
+    .select("id")
+    .eq("user_a", userA)
+    .eq("user_b", userB)
+    .single();
+
+  return !!data;
+}
+
 export async function getFriends(): Promise<FriendWithProfile[]> {
   const supabase = await createClient();
   const {

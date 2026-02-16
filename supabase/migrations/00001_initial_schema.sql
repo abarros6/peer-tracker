@@ -123,7 +123,9 @@ create policy "Users can update own profile"
 alter table public.goals enable row level security;
 
 create policy "Users can manage own goals"
-  on public.goals for all using (auth.uid() = user_id);
+  on public.goals for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
 
 create policy "Friends can read goals"
   on public.goals for select using (public.are_friends(auth.uid(), user_id));
@@ -132,7 +134,9 @@ create policy "Friends can read goals"
 alter table public.tasks enable row level security;
 
 create policy "Users can manage own tasks"
-  on public.tasks for all using (auth.uid() = user_id);
+  on public.tasks for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
 
 create policy "Friends can read tasks"
   on public.tasks for select using (public.are_friends(auth.uid(), user_id));
@@ -156,7 +160,9 @@ create policy "Users can delete own friendships"
 alter table public.invites enable row level security;
 
 create policy "Users can manage own invites"
-  on public.invites for all using (auth.uid() = inviter_id);
+  on public.invites for all
+  using (auth.uid() = inviter_id)
+  with check (auth.uid() = inviter_id);
 
 create policy "Anyone can read valid invites by code"
   on public.invites for select
@@ -170,7 +176,9 @@ create policy "Authenticated users can accept invites"
 alter table public.confirmations enable row level security;
 
 create policy "Users can manage own confirmations"
-  on public.confirmations for all using (auth.uid() = confirmed_by);
+  on public.confirmations for all
+  using (auth.uid() = confirmed_by)
+  with check (auth.uid() = confirmed_by);
 
 create policy "Task owners can read confirmations"
   on public.confirmations for select

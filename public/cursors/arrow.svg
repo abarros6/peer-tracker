@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="24" viewBox="0 0 20 24" fill="none">
+  <!-- Hand-drawn arrow cursor: slightly wobbly classic pointer shape -->
+  <path d="M1.5 0.5 L1.8 18.5 L5.5 14.2 L9.2 21.5 L12 20 L8.5 13 L13.5 12.5 Z" fill="black" stroke="black" stroke-width="0.5" stroke-linejoin="round"/>
+  <path d="M3 2.5 L3.2 16.5 L6.2 13 L10 20 L11 19.5 L7.5 12.5 L12 12 Z" fill="white" stroke="white" stroke-width="0.3" stroke-linejoin="round"/>
+</svg>

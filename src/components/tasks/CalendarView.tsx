@@ -4,7 +4,7 @@ import { useState } from "react";
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, endOfWeek, isSameMonth, isToday, isSameDay } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { isGoalActiveOnDate } from "@/lib/utils/days";
 import type { Database } from "@/types/database";
@@ -46,30 +46,30 @@ export function CalendarView({
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-        <CardTitle className="text-lg">
+        <h2 className="text-xl font-bold tracking-wide">
           {format(currentMonth, "MMMM yyyy")}
-        </CardTitle>
+        </h2>
         <div className="flex gap-1">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-5 w-5" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
           >
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-5 w-5" />
           </Button>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-7 gap-1 text-center">
-          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-            <div key={d} className="py-2 text-sm font-medium text-muted-foreground">
+        <div className="grid grid-cols-7 gap-1.5 text-center">
+          {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((d) => (
+            <div key={d} className="py-2 text-xs font-bold tracking-widest text-muted-foreground uppercase">
               {d}
             </div>
           ))}
@@ -80,41 +80,34 @@ export function CalendarView({
             const allDone =
               completion && completion.completed === completion.total;
             const someDone = completion && completion.completed > 0;
+            const nothingDone = completion && completion.completed === 0;
 
             return (
               <button
                 key={day.toISOString()}
                 onClick={() => onSelectDate(day)}
                 className={cn(
-                  "relative flex aspect-square w-full flex-col items-center justify-center rounded-lg text-sm transition-colors",
+                  "relative flex aspect-square w-full flex-col items-center justify-center rounded-xl text-sm transition-colors",
                   !inMonth && "text-muted-foreground/30",
-                  inMonth && "hover:bg-accent",
-                  selected && "bg-primary text-primary-foreground hover:bg-primary",
-                  isToday(day) && !selected && "ring-2 ring-primary/30 font-bold"
+                  inMonth && !selected && allDone && "bg-green-100 dark:bg-green-900/30",
+                  inMonth && !selected && someDone && !allDone && "bg-yellow-100 dark:bg-yellow-900/30",
+                  inMonth && !selected && nothingDone && "bg-rose-50 dark:bg-rose-900/20",
+                  inMonth && !selected && !completion && "hover:bg-accent",
+                  inMonth && !selected && completion && "hover:brightness-95",
+                  selected && "bg-primary text-primary-foreground hover:bg-primary shadow-sm",
+                  isToday(day) && !selected && "ring-2 ring-primary font-bold"
                 )}
               >
-                {format(day, "d")}
-                {completion && inMonth && (
-                  <div className="mt-0.5 flex items-center gap-0.5">
-                    <span
-                      className={cn(
-                        "h-1.5 w-1.5 rounded-full",
-                        allDone
-                          ? "bg-green-500"
-                          : someDone
-                            ? "bg-yellow-500"
-                            : "bg-muted-foreground/30"
-                      )}
-                    />
-                    {completion.total > 1 && (
-                      <span className={cn(
-                        "text-[9px] leading-none",
-                        selected ? "text-primary-foreground/70" : "text-muted-foreground"
-                      )}>
-                        {completion.completed}/{completion.total}
-                      </span>
-                    )}
-                  </div>
+                <span className="text-sm">{format(day, "d")}</span>
+                {completion && inMonth && !selected && (
+                  <span className="mt-0.5 text-[10px] leading-none text-muted-foreground">
+                    {completion.completed}/{completion.total}
+                  </span>
+                )}
+                {completion && inMonth && selected && (
+                  <span className="mt-0.5 text-[10px] leading-none text-primary-foreground/70">
+                    {completion.completed}/{completion.total}
+                  </span>
                 )}
               </button>
             );

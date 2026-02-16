@@ -8,18 +8,20 @@ A peer accountability goal-tracking app where users create goals with daily task
 |-------|-----------|
 | Framework | Next.js 16 (App Router) + React 19 + TypeScript |
 | Database & Auth | Supabase (Postgres, Auth, Row Level Security) |
-| Styling | Tailwind CSS v4 + shadcn/ui |
+| Styling | Tailwind CSS v4 + shadcn/ui (construction paper pastel theme) |
 | Deployment | Vercel |
 | Libraries | zod v4, nanoid, date-fns, lucide-react, sonner |
 
 ## Features
 
 - **Goal creation** — Define goals with flexible recurrence (daily, weekdays, weekends, custom days)
-- **Calendar view** — Full-width calendar with completion dots and per-day task checklist
+- **Calendar-first dashboard** — Full-width calendar as the hero content with pastel-tinted day cells (green/yellow/rose for completion status)
+- **Calendar view** — Always-visible calendar on the goals page with per-day task checklist
 - **Daily task tracking** — Checkboxes with optimistic UI; tasks lazily created on first toggle
 - **Streak tracking** — Automatic streak counting and 30-day completion rate stats
 - **Friend system** — Invite friends via shareable link codes (7-day expiry, one-time use)
 - **Peer confirmations** — Friends can view your progress and confirm task completions
+- **Construction paper theme** — Warm pastel color palette, paper grain texture, and hand-drawn cursors
 - **Row Level Security** — All data access gated through Supabase RLS policies
 
 ## Data Model
@@ -40,13 +42,14 @@ Six tables in Supabase Postgres:
 ```
 peer-tracker/
 ├── middleware.ts                        # Auth session refresh + route protection
+├── public/cursors/                      # Hand-drawn cursor SVGs (arrow, pointer)
 ├── supabase/migrations/                 # SQL migrations
 ├── src/
 │   ├── app/
 │   │   ├── (auth)/                      # Login, Signup (unauthenticated layout)
 │   │   ├── (app)/                       # Dashboard, Goals, Friends, Settings (authenticated layout)
-│   │   │   ├── dashboard/               # Overview stats, today's tasks, streaks
-│   │   │   ├── goals/                   # Calendar view + goal management (tabbed)
+│   │   │   ├── dashboard/               # Calendar-first layout: compact stats, calendar hero, streaks
+│   │   │   ├── goals/                   # Calendar always visible + goal management below
 │   │   │   ├── friends/                 # Friend list, invite generator
 │   │   │   ├── friends/[id]/            # Friend detail + confirmations
 │   │   │   └── settings/               # Profile settings
@@ -134,6 +137,8 @@ The app will be available at `http://localhost:3000`.
 ## Current Status
 
 - All core features implemented and building cleanly
+- Construction paper theme applied: warm pastel palette, paper grain texture, hand-drawn cursors
+- Calendar-first dashboard and tab-free goals page
 - Supabase project configured and connected
 - **Known bug**: Invite flow has an "invalid header value" error when redirecting after signup/login — needs debugging
 - Vercel deployment not yet completed
