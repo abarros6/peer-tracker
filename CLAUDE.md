@@ -21,7 +21,6 @@
 ```
 peer-tracker/
 ├── middleware.ts                        # Auth session refresh + route protection + ?next= redirect
-├── public/cursors/                      # Hand-drawn cursor SVGs (arrow.svg, pointer.svg)
 ├── supabase/migrations/                 # SQL migrations (run via Supabase SQL Editor)
 ├── src/
 │   ├── app/
@@ -51,7 +50,7 @@ peer-tracker/
 │   │   ├── dashboard/                   # OverviewStats, StreakCard
 │   │   └── settings/                    # SettingsForm
 │   ├── lib/
-│   │   ├── supabase/                    # Client factories: server.ts, browser.ts, middleware.ts
+│   │   ├── supabase/                    # Client factories: server.ts, browser.ts, middleware.ts, admin.ts
 │   │   ├── actions/                     # Server Actions: auth, goals, tasks, friends, confirmations, profile
 │   │   ├── queries/                     # Data fetching: auth, goals, tasks, friends, confirmations
 │   │   ├── utils/                       # days.ts (recurrence), streaks.ts (streak calc)
@@ -69,26 +68,17 @@ peer-tracker/
 | `actions/tasks.ts` | `toggleTask` |
 | `actions/friends.ts` | `createInvite`, `acceptInvite`, `removeFriend` |
 | `actions/confirmations.ts` | `confirmTask`, `removeConfirmation` |
-| `actions/profile.ts` | `updateProfile` |
+| `actions/profile.ts` | `updateProfile`, `deleteAccount` |
 
 ## Existing Query Functions
 
 | File | Functions |
 |------|-----------|
 | `queries/auth.ts` | `getCurrentUser`, `getCurrentProfile` |
-| `queries/goals.ts` | `getGoals`, `getGoalById`, `getArchivedGoals` |
-| `queries/tasks.ts` | `getTasksForMonth`, `getTasksForDateRange` |
+| `queries/goals.ts` | `getGoals` |
+| `queries/tasks.ts` | `getTasksForDateRange` |
 | `queries/friends.ts` | `getFriends` |
 | `queries/confirmations.ts` | `getConfirmationsForTasks` |
-
-## Known Bugs
-
-### Invite flow broken — "invalid header value" error
-- **Symptom**: After signing up/logging in via an invite link (`/invite/[code]`), the user gets an error: `Headers.append: "Bearer eyJ..." is an invalid header value`
-- **Where**: Happens during the Supabase auth token being set in headers after login redirect
-- **Likely cause**: The `?next=/invite/[code]` redirect after auth may have a timing issue where the auth session isn't fully established before the invite page tries to use it. Or there's a cookie/header encoding issue with the token.
-- **To reproduce**: Generate invite link → open in same browser (logged out) → sign up with `?next=/invite/...` → error after redirect
-- **Status**: Not yet fixed. Needs debugging of the auth redirect + session establishment flow.
 
 ## Conventions
 
@@ -100,11 +90,12 @@ peer-tracker/
 
 ### Supabase Clients
 
-Three client factories in `src/lib/supabase/`. Always use the correct one:
+Four client factories in `src/lib/supabase/`. Always use the correct one:
 
 - **`server.ts`** — For Server Components and Server Actions. Uses `cookies()` from `next/headers`.
 - **`browser.ts`** — For Client Components. Creates a new client per call.
 - **`middleware.ts`** — For `middleware.ts` only. Uses `request`/`response` cookie API.
+- **`admin.ts`** — Service-role client for admin operations (e.g., `deleteAccount`, `acceptInvite`). Server-only, never import from client code. Use for cross-user operations that RLS can't express cleanly.
 
 Never import the browser client in server code or vice versa.
 
@@ -142,6 +133,7 @@ Never import the browser client in server code or vice versa.
 - If logged in: shows "Accept Invite" button via `AcceptInviteButton` client component.
 - Auth actions (`signIn`, `signUp`) read a `next` hidden form field and redirect there after auth.
 - Middleware also respects `?next=` param when redirecting authenticated users away from `/login` or `/signup`.
+- `acceptInvite` uses the **admin client** (service-role) for the update + friendship insert because invite acceptance is a cross-user operation (user B updating user A's invite row). Auth is verified server-side before any admin operations.
 
 ### Optimistic UI
 
@@ -165,7 +157,7 @@ Never import the browser client in server code or vice versa.
 
 - **Construction paper theme** — warm pastel OKLCH palette in `globals.css`: cream backgrounds, coral primary, lavender secondary, mint accent, peach sidebar. Dark mode uses deep navy-teal/plum tones (not gray inversions).
 - Paper grain texture on body via SVG noise filter.
-- Hand-drawn cursor SVGs in `public/cursors/` (arrow.svg for default, pointer.svg for interactive elements).
+- Custom animated cursor via `CustomCursor` client component (pure CSS/canvas, no external SVG files).
 - CalendarView day cells use pastel background tints: green (all done), yellow (partial), rose (nothing done).
 - DailyChecklist rows cycle through pastel background tints.
 - `OverviewStats` has a `compact` prop for the horizontal strip layout used on the dashboard.
@@ -185,20 +177,27 @@ Never import the browser client in server code or vice versa.
 
 ## Database Migration
 
-Single migration file: `supabase/migrations/00001_initial_schema.sql`
+Single consolidated migration file: `supabase/migrations/00000_full_schema.sql`
 
-**Order matters** — tables first, then functions, then RLS policies, then indexes. The `are_friends()` function references `friendships`, so `friendships` must be created before it.
+**Order matters** — tables first, then functions, then RLS policies, then grants, then indexes. The `are_friends()` function references `friendships`, so `friendships` must be created before it.
 
 Tables: `profiles`, `goals`, `friendships`, `tasks`, `invites`, `confirmations`
 
+Key detail: `invites.accepted_by` uses `ON DELETE SET NULL` (not cascade) so old invite records survive when a user deletes their account.
+
 Run migrations via the Supabase SQL Editor (paste and run), not via CLI.
+
+**Critical**: The migration includes `GRANT` statements for `anon`, `authenticated`, and `service_role` roles. Without these grants, RLS policies alone are not sufficient — PostgreSQL requires both table-level grants AND passing RLS checks. The `invites` table uses split policies (separate SELECT/INSERT/DELETE for the inviter, separate UPDATE for the acceptor) instead of a single `FOR ALL` policy, because `FOR ALL` policies apply their `WITH CHECK` to all operations including updates by non-owners.
 
 ## Environment Variables
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
+
+`SUPABASE_SERVICE_ROLE_KEY` (no `NEXT_PUBLIC_` prefix — server-only) is used by `admin.ts` for account deletion and invite acceptance. Get it from Supabase dashboard → Settings → API → `service_role` key. **Required** — the app will crash without it when accepting invites or deleting accounts.
 
 Stored in `.env.local` (gitignored). See `.env.example` for reference.
 

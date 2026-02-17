@@ -1,8 +1,9 @@
 import { format, subDays, addDays } from "date-fns";
 import { getGoals } from "@/lib/queries/goals";
 import { getTasksForDateRange } from "@/lib/queries/tasks";
-import { calculateStreak, calculateCompletionRate } from "@/lib/utils/streaks";
+import { calculateStreak } from "@/lib/utils/streaks";
 import { isGoalActiveOnDate } from "@/lib/utils/days";
+import { getTodayConfirmationCount } from "@/lib/queries/confirmations";
 import { OverviewStats } from "@/components/dashboard/OverviewStats";
 import { TaskCalendarPage } from "@/components/tasks/TaskCalendarPage";
 
@@ -12,7 +13,10 @@ export default async function DashboardPage() {
   const todayStr = format(today, "yyyy-MM-dd");
   const sixtyDaysAgo = format(subDays(today, 60), "yyyy-MM-dd");
   const thirtyDaysAhead = format(addDays(today, 30), "yyyy-MM-dd");
-  const tasks = await getTasksForDateRange(sixtyDaysAgo, thirtyDaysAhead);
+  const [tasks, confirmationCount] = await Promise.all([
+    getTasksForDateRange(sixtyDaysAgo, thirtyDaysAhead),
+    getTodayConfirmationCount(),
+  ]);
 
   const todayGoals = goals.filter((g) =>
     isGoalActiveOnDate(today, g.recurrence, g.custom_days)
@@ -39,6 +43,7 @@ export default async function DashboardPage() {
         todayCompleted={todayCompleted}
         todayTotal={todayGoals.length}
         longestStreak={longestStreak}
+        confirmations={confirmationCount}
         compact
       />
 

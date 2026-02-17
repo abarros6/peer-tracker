@@ -72,6 +72,48 @@ export default async function InvitePage({
   }
 
   const { invite, inviterName } = inviteData;
+
+  // State 1b: Invite exists but is expired or already used
+  const isExpired = new Date(invite.expires_at) < new Date();
+  const isUsed = invite.accepted_by !== null;
+  if (isExpired || isUsed) {
+    return (
+      <div className="flex min-h-dvh items-center justify-center bg-muted/40 p-4">
+        <Card className="w-full max-w-sm">
+          <CardHeader className="items-center pb-2 pt-8">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
+              <AlertCircle className="h-8 w-8 text-destructive" />
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-2 text-center px-6 pb-2">
+            <h1 className="text-xl font-semibold tracking-tight">
+              Invite Not Found
+            </h1>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              This invite link is invalid, has expired, or has already been used.
+            </p>
+          </CardContent>
+          <CardFooter className="flex flex-col gap-3 px-6 pb-8 pt-4">
+            {user ? (
+              <Button asChild className="w-full">
+                <Link href="/dashboard">Go to Dashboard</Link>
+              </Button>
+            ) : (
+              <>
+                <Button asChild className="w-full">
+                  <Link href="/signup">Create an account</Link>
+                </Button>
+                <Button asChild variant="ghost" className="w-full">
+                  <Link href="/login">Sign in</Link>
+                </Button>
+              </>
+            )}
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
+
   const initials = getInitials(inviterName);
 
   // State 2: Valid + unauthenticated

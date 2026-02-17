@@ -1,7 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { z } from "zod";
 
 const updateProfileSchema = z.object({
@@ -33,4 +35,24 @@ export async function updateProfile(formData: FormData) {
 
   revalidatePath("/", "layout");
   return { success: true };
+}
+
+export async function deleteAccount() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { error: "Not authenticated" };
+
+  // Sign the user out first (clears session cookies)
+  await supabase.auth.signOut();
+
+  // Delete the auth user via admin client — cascades to all application data
+  const adminClient = createAdminClient();
+  const { error } = await adminClient.auth.admin.deleteUser(user.id);
+
+  if (error) return { error: error.message };
+
+  redirect("/login");
 }

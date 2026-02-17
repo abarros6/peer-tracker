@@ -1,5 +1,10 @@
 -- ============================================
--- 1. Tables (no cross-references yet)
+-- Peer Tracker — Full Schema
+-- Consolidated from 00001, 00002, 00003
+-- ============================================
+
+-- ============================================
+-- 1. Tables
 -- ============================================
 
 -- Profiles: synced from auth.users via trigger
@@ -48,12 +53,12 @@ create table public.tasks (
   unique (goal_id, date)
 );
 
--- Invites
+-- Invites (accepted_by uses ON DELETE SET NULL so old invites survive user deletion)
 create table public.invites (
   id uuid primary key default gen_random_uuid(),
   code text not null unique,
   inviter_id uuid not null references public.profiles(id) on delete cascade,
-  accepted_by uuid references public.profiles(id),
+  accepted_by uuid references public.profiles(id) on delete set null,
   expires_at timestamptz not null,
   created_at timestamptz not null default now()
 );
@@ -159,18 +164,34 @@ create policy "Users can delete own friendships"
 -- Invites
 alter table public.invites enable row level security;
 
-create policy "Users can manage own invites"
-  on public.invites for all
-  using (auth.uid() = inviter_id)
+create policy "Users can read own invites"
+  on public.invites for select
+  using (auth.uid() = inviter_id);
+
+create policy "Users can create invites"
+  on public.invites for insert
   with check (auth.uid() = inviter_id);
+
+create policy "Users can delete own invites"
+  on public.invites for delete
+  using (auth.uid() = inviter_id);
 
 create policy "Anyone can read valid invites by code"
   on public.invites for select
   using (accepted_by is null and expires_at > now());
 
+-- Fixed: WITH CHECK clause allows setting accepted_by to the current user
 create policy "Authenticated users can accept invites"
   on public.invites for update
-  using (auth.uid() is not null and accepted_by is null and expires_at > now());
+  using (
+    auth.uid() is not null
+    and accepted_by is null
+    and expires_at > now()
+  )
+  with check (
+    auth.uid() is not null
+    and accepted_by = auth.uid()
+  );
 
 -- Confirmations
 alter table public.confirmations enable row level security;
@@ -191,7 +212,30 @@ create policy "Task owners can read confirmations"
   );
 
 -- ============================================
--- 4. Indexes
+-- 4. Grants
+-- ============================================
+grant usage on schema public to anon, authenticated;
+
+grant select on public.profiles to anon, authenticated;
+grant update on public.profiles to authenticated;
+
+grant all on public.goals to authenticated;
+grant select on public.goals to anon;
+
+grant all on public.tasks to authenticated;
+grant select on public.tasks to anon;
+
+grant all on public.friendships to authenticated;
+
+grant all on public.invites to authenticated;
+grant select on public.invites to anon;
+
+grant all on public.confirmations to authenticated;
+
+grant all on all tables in schema public to service_role;
+
+-- ============================================
+-- 5. Indexes
 -- ============================================
 create index idx_goals_user_id on public.goals(user_id);
 create index idx_tasks_goal_id on public.tasks(goal_id);

@@ -1,4 +1,4 @@
-import { Target, CheckCircle, Flame, TrendingUp } from "lucide-react";
+import { Target, CheckCircle, Flame, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -7,12 +7,14 @@ export function OverviewStats({
   todayCompleted,
   todayTotal,
   longestStreak,
+  confirmations = 0,
   compact = false,
 }: {
   totalGoals: number;
   todayCompleted: number;
   todayTotal: number;
   longestStreak: number;
+  confirmations?: number;
   compact?: boolean;
 }) {
   const stats = [
@@ -32,9 +34,9 @@ export function OverviewStats({
       icon: Flame,
     },
     {
-      label: "Today Rate",
-      value: todayTotal > 0 ? `${Math.round((todayCompleted / todayTotal) * 100)}%` : "\u2014",
-      icon: TrendingUp,
+      label: "Confirmations",
+      value: confirmations,
+      icon: Users,
     },
   ];
 

@@ -21,7 +21,8 @@ A peer accountability goal-tracking app where users create goals with daily task
 - **Streak tracking** — Automatic streak counting and 30-day completion rate stats
 - **Friend system** — Invite friends via shareable link codes (7-day expiry, one-time use)
 - **Peer confirmations** — Friends can view your progress and confirm task completions
-- **Construction paper theme** — Warm pastel color palette, paper grain texture, and hand-drawn cursors
+- **Account deletion** — Users can delete their account and all data from settings (Danger Zone)
+- **Construction paper theme** — Warm pastel color palette, paper grain texture, custom animated cursor
 - **Row Level Security** — All data access gated through Supabase RLS policies
 
 ## Data Model
@@ -42,8 +43,7 @@ Six tables in Supabase Postgres:
 ```
 peer-tracker/
 ├── middleware.ts                        # Auth session refresh + route protection
-├── public/cursors/                      # Hand-drawn cursor SVGs (arrow, pointer)
-├── supabase/migrations/                 # SQL migrations
+├── supabase/migrations/                 # SQL migrations (single consolidated file)
 ├── src/
 │   ├── app/
 │   │   ├── (auth)/                      # Login, Signup (unauthenticated layout)
@@ -64,7 +64,7 @@ peer-tracker/
 │   │   ├── dashboard/                   # OverviewStats, StreakCard
 │   │   └── settings/                    # SettingsForm
 │   ├── lib/
-│   │   ├── supabase/                    # Client factories (server, browser, middleware)
+│   │   ├── supabase/                    # Client factories (server, browser, middleware, admin)
 │   │   ├── actions/                     # Server Actions (auth, goals, tasks, friends, confirmations, profile)
 │   │   ├── queries/                     # Data fetching (auth, goals, tasks, friends, confirmations)
 │   │   └── utils/                       # Date helpers, streak calculation
@@ -95,11 +95,14 @@ npm install
 cp .env.example .env.local
 ```
 
-Then fill in your Supabase credentials (Project URL and anon key from **Settings > API** in the Supabase dashboard).
+Then fill in your Supabase credentials from **Settings > API** in the Supabase dashboard:
+- `NEXT_PUBLIC_SUPABASE_URL` — Project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` — `anon` public key
+- `SUPABASE_SERVICE_ROLE_KEY` — `service_role` secret key (used for account deletion)
 
 3. Run the database migration:
 
-Go to your Supabase dashboard **SQL Editor**, paste the contents of `supabase/migrations/00001_initial_schema.sql`, and run it.
+Go to your Supabase dashboard **SQL Editor**, paste the contents of `supabase/migrations/00000_full_schema.sql`, and run it.
 
 4. Configure auth for local testing:
 
@@ -128,7 +131,7 @@ The app will be available at `http://localhost:3000`.
 
 1. Push the repo to GitHub.
 2. Import the project on [Vercel](https://vercel.com).
-3. Add environment variables (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`) in the Vercel dashboard.
+3. Add environment variables (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`) in the Vercel dashboard.
 4. Deploy — Vercel auto-detects Next.js.
 5. In Supabase dashboard, go to **Authentication > URL Configuration**:
    - Set **Site URL** to your Vercel production URL.
@@ -136,9 +139,10 @@ The app will be available at `http://localhost:3000`.
 
 ## Current Status
 
-- All core features implemented and building cleanly
-- Construction paper theme applied: warm pastel palette, paper grain texture, hand-drawn cursors
+- All core features implemented and working: signup, login, goals, tasks, calendar, friends, invites, confirmations, account deletion
+- Construction paper theme: warm pastel palette, paper grain texture, custom animated cursor
 - Calendar-first dashboard and tab-free goals page
-- Supabase project configured and connected
-- **Known bug**: Invite flow has an "invalid header value" error when redirecting after signup/login — needs debugging
+- Invite link flow fully functional (signup → accept invite → friendship created)
+- Account deletion with admin client + confirmation dialog
+- Database consolidated into single migration (`00000_full_schema.sql`) with grants for all Supabase roles
 - Vercel deployment not yet completed

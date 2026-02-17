@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { nanoid } from "nanoid";
 import { addDays } from "date-fns";
 
@@ -35,8 +36,11 @@ export async function acceptInvite(code: string) {
 
   if (!user) return { error: "Not authenticated" };
 
+  // Use admin client for cross-user operations (bypasses RLS)
+  const admin = createAdminClient();
+
   // Find the invite
-  const { data: invite, error: findError } = await supabase
+  const { data: invite, error: findError } = await admin
     .from("invites")
     .select("*")
     .eq("code", code)
@@ -59,7 +63,7 @@ export async function acceptInvite(code: string) {
       : [user.id, invite.inviter_id];
 
   // Check if already friends
-  const { data: existing } = await supabase
+  const { data: existing } = await admin
     .from("friendships")
     .select("id")
     .eq("user_a", userA)
@@ -71,7 +75,7 @@ export async function acceptInvite(code: string) {
   }
 
   // Mark invite as accepted
-  const { error: updateError } = await supabase
+  const { error: updateError } = await admin
     .from("invites")
     .update({ accepted_by: user.id })
     .eq("id", invite.id);
@@ -79,13 +83,14 @@ export async function acceptInvite(code: string) {
   if (updateError) return { error: updateError.message };
 
   // Create friendship
-  const { error: friendError } = await supabase
+  const { error: friendError } = await admin
     .from("friendships")
     .insert({ user_a: userA, user_b: userB });
 
   if (friendError) return { error: friendError.message };
 
   revalidatePath("/friends");
+  revalidatePath(`/invite/${code}`);
   return { success: true };
 }
 
