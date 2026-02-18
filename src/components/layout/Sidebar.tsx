@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, Target, Users, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { UserMenu } from "./UserMenu";
 
 const links = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -12,17 +13,17 @@ const links = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
-export function Sidebar() {
+export function Sidebar({ displayName }: { displayName: string }) {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-56 shrink-0 border-r bg-sidebar md:block">
+    <aside className="hidden w-56 shrink-0 border-r bg-sidebar md:flex md:flex-col">
       <div className="flex h-14 items-center border-b border-sidebar-border px-4">
         <Link href="/dashboard" className="text-lg font-bold text-sidebar-foreground">
           Peer Tracker
         </Link>
       </div>
-      <nav className="flex flex-col gap-1 p-2">
+      <nav className="flex flex-1 flex-col gap-1 p-2">
         {links.map(({ href, label, icon: Icon }) => (
           <Link
             key={href}
@@ -39,6 +40,12 @@ export function Sidebar() {
           </Link>
         ))}
       </nav>
+      <div className="border-t border-sidebar-border p-2">
+        <UserMenu
+          displayName={displayName}
+          className="w-full justify-start text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+        />
+      </div>
     </aside>
   );
 }

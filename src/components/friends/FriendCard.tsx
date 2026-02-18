@@ -18,9 +18,16 @@ import {
 } from "@/components/ui/alert-dialog";
 import { removeFriend } from "@/lib/actions/friends";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import type { FriendWithProfile } from "@/lib/queries/friends";
 
-export function FriendCard({ friend }: { friend: FriendWithProfile }) {
+export function FriendCard({
+  friend,
+  progress,
+}: {
+  friend: FriendWithProfile;
+  progress?: { completed: number; total: number };
+}) {
   const [showConfirm, setShowConfirm] = useState(false);
   const initials = friend.displayName
     .split(" ")
@@ -38,6 +45,20 @@ export function FriendCard({ friend }: { friend: FriendWithProfile }) {
               <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
             <span className="font-medium">{friend.displayName}</span>
+            {progress && progress.total > 0 && (
+              <span
+                className={cn(
+                  "rounded-full px-2 py-0.5 text-xs font-bold",
+                  progress.completed === progress.total
+                    ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300"
+                    : progress.completed > 0
+                    ? "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
+                    : "bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300"
+                )}
+              >
+                {progress.completed}/{progress.total}
+              </span>
+            )}
           </div>
           <div className="flex gap-1">
             <Button variant="ghost" size="icon" asChild>

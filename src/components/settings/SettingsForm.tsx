@@ -54,7 +54,7 @@ export function SettingsForm({ profile }: { profile: Profile }) {
         <CardHeader>
           <CardTitle>Profile</CardTitle>
         </CardHeader>
-        <form action={formAction}>
+        <form action={formAction} className="flex flex-col gap-6">
           <CardContent className="space-y-4">
             {state?.error && (
               <p className="text-sm text-destructive">{state.error}</p>

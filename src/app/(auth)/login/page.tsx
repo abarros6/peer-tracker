@@ -27,7 +27,7 @@ export default function LoginPage() {
         <CardTitle className="text-2xl">Welcome back</CardTitle>
         <CardDescription>Sign in to your Peer Tracker account</CardDescription>
       </CardHeader>
-      <form action={formAction}>
+      <form action={formAction} className="flex flex-col gap-6">
         {next && <input type="hidden" name="next" value={next} />}
         <CardContent className="space-y-4">
           {state?.error && (

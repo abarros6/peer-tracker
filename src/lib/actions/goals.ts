@@ -105,3 +105,17 @@ export async function restoreGoal(goalId: string) {
   revalidatePath("/goals");
   return { success: true };
 }
+
+export async function deleteGoal(goalId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("goals")
+    .delete()
+    .eq("id", goalId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/goals");
+  revalidatePath("/dashboard");
+  return { success: true };
+}

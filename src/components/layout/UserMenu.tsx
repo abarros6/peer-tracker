@@ -10,8 +10,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 
-export function UserMenu({ displayName }: { displayName: string }) {
+export function UserMenu({
+  displayName,
+  className,
+}: {
+  displayName: string;
+  className?: string;
+}) {
   const initials = displayName
     .split(" ")
     .map((n) => n[0])
@@ -22,7 +29,7 @@ export function UserMenu({ displayName }: { displayName: string }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="gap-2">
+        <Button variant="ghost" className={cn("gap-2", className)}>
           <Avatar className="h-7 w-7">
             <AvatarFallback className="text-xs">{initials}</AvatarFallback>
           </Avatar>

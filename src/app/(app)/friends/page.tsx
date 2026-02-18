@@ -1,9 +1,9 @@
-import { getFriends } from "@/lib/queries/friends";
+import { getFriendsWithTodayProgress } from "@/lib/queries/friends";
 import { FriendCard } from "@/components/friends/FriendCard";
 import { InviteGenerator } from "@/components/friends/InviteGenerator";
 
 export default async function FriendsPage() {
-  const friends = await getFriends();
+  const friends = await getFriendsWithTodayProgress(new Date());
 
   return (
     <div className="space-y-6">
@@ -23,7 +23,11 @@ export default async function FriendsPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {friends.map((friend) => (
-            <FriendCard key={friend.friendshipId} friend={friend} />
+            <FriendCard
+              key={friend.friendshipId}
+              friend={friend}
+              progress={{ completed: friend.completedToday, total: friend.totalToday }}
+            />
           ))}
         </div>
       )}

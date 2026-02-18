@@ -1,8 +1,8 @@
-import { getGoals } from "@/lib/queries/goals";
+import { getGoals, getArchivedGoals } from "@/lib/queries/goals";
 import { GoalList } from "@/components/goals/GoalList";
 
 export default async function GoalsPage() {
-  const goals = await getGoals();
+  const [goals, archivedGoals] = await Promise.all([getGoals(), getArchivedGoals()]);
 
   return (
     <div className="space-y-6">
@@ -13,7 +13,7 @@ export default async function GoalsPage() {
         </p>
       </div>
 
-      <GoalList goals={goals} />
+      <GoalList goals={goals} archivedGoals={archivedGoals} />
     </div>
   );
 }

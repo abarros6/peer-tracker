@@ -27,7 +27,7 @@ export default function SignupPage() {
         <CardTitle className="text-2xl">Create an account</CardTitle>
         <CardDescription>Start tracking your goals with friends</CardDescription>
       </CardHeader>
-      <form action={formAction}>
+      <form action={formAction} className="flex flex-col gap-6">
         {next && <input type="hidden" name="next" value={next} />}
         <CardContent className="space-y-4">
           {state?.error && (

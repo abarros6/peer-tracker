@@ -13,9 +13,11 @@ type Task = Database["public"]["Tables"]["tasks"]["Row"];
 export function TaskCalendarPage({
   goals,
   tasks,
+  rightColumnExtra,
 }: {
   goals: Goal[];
   tasks: Task[];
+  rightColumnExtra?: React.ReactNode;
 }) {
   const [selectedDate, setSelectedDate] = useState(new Date());
 
@@ -27,20 +29,23 @@ export function TaskCalendarPage({
         selectedDate={selectedDate}
         onSelectDate={setSelectedDate}
       />
-      <Card className="h-fit">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">
-            {format(selectedDate, "EEEE, MMMM d")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <DailyChecklist
-            date={selectedDate}
-            goals={goals}
-            tasks={tasks}
-          />
-        </CardContent>
-      </Card>
+      <div className="flex flex-col gap-6">
+        <Card className="h-fit">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">
+              {format(selectedDate, "EEEE, MMMM d")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DailyChecklist
+              date={selectedDate}
+              goals={goals}
+              tasks={tasks}
+            />
+          </CardContent>
+        </Card>
+        {rightColumnExtra}
+      </div>
     </div>
   );
 }

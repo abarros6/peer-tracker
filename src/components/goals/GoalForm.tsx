@@ -53,7 +53,7 @@ export function GoalForm({
       <CardHeader>
         <CardTitle>{goal ? "Edit Goal" : "New Goal"}</CardTitle>
       </CardHeader>
-      <form action={formAction}>
+      <form action={formAction} className="flex flex-col gap-6">
         <CardContent className="space-y-4">
           {state?.error && (
             <p className="text-sm text-destructive">{state.error}</p>

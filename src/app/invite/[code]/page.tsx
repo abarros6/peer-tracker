@@ -217,9 +217,9 @@ export default async function InvitePage({
                 .
               </p>
             </div>
-            <div className="flex items-center justify-center gap-2 rounded-lg bg-green-500/10 px-4 py-3">
-              <UserCheck className="h-4 w-4 shrink-0 text-green-600" />
-              <p className="text-xs text-green-700 dark:text-green-400">
+            <div className="flex items-center justify-center gap-2 rounded-lg bg-emerald-500/10 px-4 py-3">
+              <UserCheck className="h-4 w-4 shrink-0 text-emerald-600" />
+              <p className="text-xs text-emerald-700 dark:text-emerald-400">
                 You can view their progress on the friends page
               </p>
             </div>

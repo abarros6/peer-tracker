@@ -80,21 +80,18 @@ export function CalendarView({
             const allDone =
               completion && completion.completed === completion.total;
             const someDone = completion && completion.completed > 0;
-            const nothingDone = completion && completion.completed === 0;
 
             return (
               <button
                 key={day.toISOString()}
                 onClick={() => onSelectDate(day)}
                 className={cn(
-                  "relative flex aspect-square w-full flex-col items-center justify-center rounded-xl text-sm transition-colors",
-                  !inMonth && "text-muted-foreground/30",
-                  inMonth && !selected && allDone && "bg-green-100 dark:bg-green-900/30",
-                  inMonth && !selected && someDone && !allDone && "bg-yellow-100 dark:bg-yellow-900/30",
-                  inMonth && !selected && nothingDone && "bg-rose-50 dark:bg-rose-900/20",
-                  inMonth && !selected && !completion && "hover:bg-accent",
-                  inMonth && !selected && completion && "hover:brightness-95",
-                  selected && "bg-primary text-primary-foreground hover:bg-primary shadow-sm",
+                  "relative flex aspect-square w-full flex-col items-center justify-center rounded-xl text-sm transition-all",
+                  !inMonth && "opacity-25",
+                  inMonth && !selected && allDone && "bg-emerald-100 dark:bg-emerald-900/30",
+                  inMonth && !selected && someDone && !allDone && "bg-amber-100 dark:bg-amber-900/25",
+                  inMonth && !selected && "hover:ring-2 hover:ring-primary/40",
+                  selected && "bg-primary text-primary-foreground shadow-sm",
                   isToday(day) && !selected && "ring-2 ring-primary font-bold"
                 )}
               >

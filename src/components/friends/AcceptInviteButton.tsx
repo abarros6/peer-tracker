@@ -35,9 +35,9 @@ export function AcceptInviteButton({
         </div>
       )}
       {state?.success && (
-        <div className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-500/10 px-4 py-3">
-          <Check className="h-4 w-4 shrink-0 text-green-600" />
-          <p className="text-sm text-green-700 dark:text-green-400">
+        <div className="flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-500/10 px-4 py-3">
+          <Check className="h-4 w-4 shrink-0 text-emerald-600" />
+          <p className="text-sm text-emerald-700 dark:text-emerald-400">
             You&apos;re now friends with {inviterName}!
           </p>
         </div>
