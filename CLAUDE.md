@@ -34,8 +34,8 @@ peer-tracker/
 │   │   │   ├── layout.tsx               # Fetches profile, renders sidebar/nav
 │   │   │   ├── loading.tsx              # Skeleton loading state
 │   │   │   ├── error.tsx                # Error boundary
-│   │   │   ├── dashboard/page.tsx       # Calendar-first layout: compact stats, calendar hero, streaks
-│   │   │   ├── goals/page.tsx           # Calendar always visible + Manage Goals below
+│   │   │   ├── dashboard/page.tsx       # Streak greeting, 4-card stats, calendar hero, friends today sidebar
+│   │   │   ├── goals/page.tsx           # Calendar always visible + active goals + collapsible archived section
 │   │   │   ├── friends/page.tsx         # Friend list + invite generator
 │   │   │   ├── friends/[id]/page.tsx    # Friend detail + confirmations
 │   │   │   └── settings/page.tsx        # Profile settings form
@@ -47,7 +47,7 @@ peer-tracker/
 │   │   ├── goals/                       # GoalForm, GoalCard, GoalList
 │   │   ├── tasks/                       # TaskCheckbox, DailyChecklist, CalendarView, TaskCalendarPage
 │   │   ├── friends/                     # FriendCard, InviteGenerator, AcceptInviteButton, ConfirmButton, FriendProgress
-│   │   ├── dashboard/                   # OverviewStats, StreakCard
+│   │   ├── dashboard/                   # OverviewStats, StreakCard, FriendsTodaySection
 │   │   └── settings/                    # SettingsForm
 │   ├── lib/
 │   │   ├── supabase/                    # Client factories: server.ts, browser.ts, middleware.ts, admin.ts
@@ -64,7 +64,7 @@ peer-tracker/
 | File | Functions |
 |------|-----------|
 | `actions/auth.ts` | `signUp`, `signIn`, `signOut` — auth actions support `next` hidden field for post-auth redirect |
-| `actions/goals.ts` | `createGoal`, `updateGoal`, `archiveGoal`, `restoreGoal` |
+| `actions/goals.ts` | `createGoal`, `updateGoal`, `archiveGoal`, `restoreGoal`, `deleteGoal` |
 | `actions/tasks.ts` | `toggleTask` |
 | `actions/friends.ts` | `createInvite`, `acceptInvite`, `removeFriend` |
 | `actions/confirmations.ts` | `confirmTask`, `removeConfirmation` |
@@ -75,10 +75,10 @@ peer-tracker/
 | File | Functions |
 |------|-----------|
 | `queries/auth.ts` | `getCurrentUser`, `getCurrentProfile` |
-| `queries/goals.ts` | `getGoals` |
+| `queries/goals.ts` | `getGoals`, `getArchivedGoals` |
 | `queries/tasks.ts` | `getTasksForDateRange` |
-| `queries/friends.ts` | `getFriends` |
-| `queries/confirmations.ts` | `getConfirmationsForTasks` |
+| `queries/friends.ts` | `getFriends`, `getFriendsWithTodayProgress` |
+| `queries/confirmations.ts` | `getConfirmationsForTasks`, `getTodayConfirmationCount`, `getMyConfirmationsForTasks` |
 
 ## Conventions
 
@@ -155,15 +155,54 @@ Never import the browser client in server code or vice versa.
 
 ### Styling
 
-- **Construction paper theme** — warm pastel OKLCH palette in `globals.css`: cream backgrounds, coral primary, lavender secondary, mint accent, peach sidebar. Dark mode uses deep navy-teal/plum tones (not gray inversions).
-- Paper grain texture on body via SVG noise filter.
+- **Navy + Saffron theme** — OKLCH palette in `globals.css`: light mode uses a soft blue-white background (`oklch(0.97 0.008 240)`) with saffron primary (`oklch(0.72 0.17 80)`), teal accent, and white cards. Dark mode inverts to deep navy background.
+- Sidebar is always dark/inverted (`oklch(0.22 0.04 240)`) in both light and dark modes, with saffron for active items.
+- No paper grain texture.
 - Custom animated cursor via `CustomCursor` client component (pure CSS/canvas, no external SVG files).
-- CalendarView day cells use pastel background tints: green (all done), yellow (partial), rose (nothing done).
-- DailyChecklist rows cycle through pastel background tints.
-- `OverviewStats` has a `compact` prop for the horizontal strip layout used on the dashboard.
+- CalendarView day cells: emerald tint (all done), amber tint (partial), no tint (nothing done — rose was removed as too jarring).
+- DailyChecklist rows cycle through 6 pastel tints: amber, sky, teal, indigo, violet, rose.
+- `OverviewStats` renders a 4-card grid on dashboard (no `compact` prop needed). Streak ≥ 7 days gets amber flame icon and "N-day streak!" label.
 - Tailwind CSS v4 utility classes.
 - shadcn/ui theming via CSS variables in `globals.css`.
 - Mobile-first responsive design. Bottom nav on mobile, sidebar on desktop.
+- Desktop header (`md:hidden`) — the top header bar is hidden on desktop; UserMenu lives in the sidebar bottom on desktop.
+
+### Layout
+
+- `Sidebar` accepts a `displayName: string` prop and renders `<UserMenu>` at the bottom with sidebar-specific styling.
+- `AppLayout` passes `profile.display_name` to `Sidebar` and applies `md:hidden` to the top header.
+- `UserMenu` accepts an optional `className` prop for contextual styling (sidebar uses `justify-start text-sidebar-foreground/80`).
+
+### Forms
+
+- All `<form>` elements wrapping `CardContent` + `CardFooter` must have `className="flex flex-col gap-6"` to ensure proper spacing between form sections. `Card`'s built-in `gap-6` only applies to direct flex children — wrapping in a `<form>` breaks this.
+
+### Goal Lifecycle
+
+- Active goals: shown on dashboard calendar and daily checklist.
+- Archived goals (`archived=true`): hidden from dashboard; visible in collapsible "Archived" section at bottom of Goals page (dimmed opacity). Can be restored or permanently deleted.
+- `deleteGoal` permanently removes the goal and all task history (non-reversible). Only available on archived goals.
+- `GoalList` receives both `goals` and `archivedGoals` props; uses `showArchived` toggle state.
+
+### Dashboard Structure
+
+- Heading: streak-based greeting via `getStreakGreeting(streak, name, date)` — tiers at 0, 1, 2–3, 4–6, 7–13, 14–20, 21–29, 30–59, 60+ days. Uses day-of-month to deterministically rotate messages.
+- Stats: 4-card `OverviewStats` grid (Goals, Today progress, Best Streak, Kudos received).
+- Main: `TaskCalendarPage` with `rightColumnExtra` prop carrying `<FriendsTodaySection>`.
+- Right column layout: daily checklist card on top, Friends Today section below.
+
+### Friends Today Section
+
+- `FriendsTodaySection` component in `src/components/dashboard/` — server component.
+- `getFriendsWithTodayProgress(today: Date)` in `queries/friends.ts` — batch-fetches profiles, goals, tasks in parallel; returns per-friend `{ completedToday, totalToday }`.
+- Color coding: emerald (all done), amber (partial), rose (0/N), muted (no goals today).
+- Each pill links to `/friends/[id]`.
+- `FriendCard` on the Friends page also shows an inline progress badge (same color logic).
+
+### Confirmation Visibility
+
+- `getMyConfirmationsForTasks(taskIds)` returns confirmations on the current user's own tasks (who confirmed them).
+- `DailyChecklist` accepts `confirmations?: TaskConfirmation[]` and shows confirmer initials as small saffron avatar chips on task rows. Up to 3 shown, then `+N`.
 
 ### File Naming
 
@@ -205,4 +244,3 @@ Stored in `.env.local` (gitignored). See `.env.example` for reference.
 
 - **Vercel**: Import from GitHub, add env vars, deploy
 - **Supabase**: After deploy, set Site URL and Redirect URLs in Authentication > URL Configuration
-- Not yet deployed — deployment was in progress when session ended

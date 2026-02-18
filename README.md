@@ -8,21 +8,25 @@ A peer accountability goal-tracking app where users create goals with daily task
 |-------|-----------|
 | Framework | Next.js 16 (App Router) + React 19 + TypeScript |
 | Database & Auth | Supabase (Postgres, Auth, Row Level Security) |
-| Styling | Tailwind CSS v4 + shadcn/ui (construction paper pastel theme) |
+| Styling | Tailwind CSS v4 + shadcn/ui (navy + saffron OKLCH theme) |
 | Deployment | Vercel |
 | Libraries | zod v4, nanoid, date-fns, lucide-react, sonner |
 
 ## Features
 
 - **Goal creation** — Define goals with flexible recurrence (daily, weekdays, weekends, custom days)
-- **Calendar-first dashboard** — Full-width calendar as the hero content with pastel-tinted day cells (green/yellow/rose for completion status)
+- **Calendar-first dashboard** — Full-width calendar as the hero content with emerald/amber day tints for completion status
+- **Streak-based greeting** — Dashboard heading rotates motivational messages based on your current streak length
 - **Calendar view** — Always-visible calendar on the goals page with per-day task checklist
 - **Daily task tracking** — Checkboxes with optimistic UI; tasks lazily created on first toggle
-- **Streak tracking** — Automatic streak counting and 30-day completion rate stats
+- **Completion banner** — "All done for today!" banner appears in the checklist when all tasks are checked off
+- **Streak tracking** — Automatic streak counting displayed with flame icon when ≥ 7 days
 - **Friend system** — Invite friends via shareable link codes (7-day expiry, one-time use)
-- **Peer confirmations** — Friends can view your progress and confirm task completions
+- **Friends Today sidebar** — Color-coded friend progress pills on the dashboard (emerald/amber/rose)
+- **Peer confirmations** — Friends can view your progress and confirm task completions; confirmer initials appear on your own task rows
+- **Goal archiving** — Archive goals to hide them from your dashboard; restore or permanently delete from the Goals page
 - **Account deletion** — Users can delete their account and all data from settings (Danger Zone)
-- **Construction paper theme** — Warm pastel color palette, paper grain texture, custom animated cursor
+- **Navy + saffron theme** — Clean OKLCH palette, dark inverted sidebar, custom animated cursor
 - **Row Level Security** — All data access gated through Supabase RLS policies
 
 ## Data Model
@@ -48,8 +52,8 @@ peer-tracker/
 │   ├── app/
 │   │   ├── (auth)/                      # Login, Signup (unauthenticated layout)
 │   │   ├── (app)/                       # Dashboard, Goals, Friends, Settings (authenticated layout)
-│   │   │   ├── dashboard/               # Calendar-first layout: compact stats, calendar hero, streaks
-│   │   │   ├── goals/                   # Calendar always visible + goal management below
+│   │   │   ├── dashboard/               # Streak greeting, 4-card stats, calendar hero, friends today sidebar
+│   │   │   ├── goals/                   # Calendar always visible + active/archived goal management
 │   │   │   ├── friends/                 # Friend list, invite generator
 │   │   │   ├── friends/[id]/            # Friend detail + confirmations
 │   │   │   └── settings/               # Profile settings
@@ -61,7 +65,7 @@ peer-tracker/
 │   │   ├── goals/                       # GoalForm, GoalCard, GoalList
 │   │   ├── tasks/                       # TaskCheckbox, DailyChecklist, CalendarView, TaskCalendarPage
 │   │   ├── friends/                     # FriendCard, InviteGenerator, AcceptInviteButton, ConfirmButton, FriendProgress
-│   │   ├── dashboard/                   # OverviewStats, StreakCard
+│   │   ├── dashboard/                   # OverviewStats, StreakCard, FriendsTodaySection
 │   │   └── settings/                    # SettingsForm
 │   ├── lib/
 │   │   ├── supabase/                    # Client factories (server, browser, middleware, admin)
@@ -140,9 +144,9 @@ The app will be available at `http://localhost:3000`.
 ## Current Status
 
 - All core features implemented and working: signup, login, goals, tasks, calendar, friends, invites, confirmations, account deletion
-- Construction paper theme: warm pastel palette, paper grain texture, custom animated cursor
-- Calendar-first dashboard and tab-free goals page
+- Navy + saffron OKLCH theme with dark inverted sidebar and custom animated cursor
+- Calendar-first dashboard with streak greeting, friends today sidebar, and confirmation visibility
+- Goal archive/restore/delete flow fully functional
 - Invite link flow fully functional (signup → accept invite → friendship created)
 - Account deletion with admin client + confirmation dialog
 - Database consolidated into single migration (`00000_full_schema.sql`) with grants for all Supabase roles
-- Vercel deployment not yet completed
