@@ -3,7 +3,7 @@ import { getGoals } from "@/lib/queries/goals";
 import { getTasksForDateRange } from "@/lib/queries/tasks";
 import { calculateStreak } from "@/lib/utils/streaks";
 import { isGoalActiveOnDate } from "@/lib/utils/days";
-import { getTodayConfirmationCount } from "@/lib/queries/confirmations";
+import { getTodayConfirmationCount, getMyConfirmationsForTasks } from "@/lib/queries/confirmations";
 import { getCurrentProfile } from "@/lib/queries/auth";
 import { getFriendsWithTodayProgress } from "@/lib/queries/friends";
 import { OverviewStats } from "@/components/dashboard/OverviewStats";
@@ -111,6 +111,8 @@ export default async function DashboardPage() {
     getFriendsWithTodayProgress(today),
   ]);
 
+  const myConfirmations = await getMyConfirmationsForTasks(tasks.map((t) => t.id));
+
   const todayGoals = goals.filter((g) =>
     isGoalActiveOnDate(today, g.recurrence, g.custom_days)
   );
@@ -149,6 +151,7 @@ export default async function DashboardPage() {
         <TaskCalendarPage
           goals={goals}
           tasks={tasks}
+          confirmations={myConfirmations}
           rightColumnExtra={<FriendsTodaySection friends={friendsProgress} />}
         />
       )}

@@ -1,6 +1,12 @@
 import { format } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
 
+export type TaskConfirmation = {
+  task_id: string;
+  confirmed_by: string;
+  confirmerName: string;
+};
+
 export async function getTodayConfirmationCount() {
   const supabase = await createClient();
   const {
@@ -20,6 +26,26 @@ export async function getTodayConfirmationCount() {
     .neq("confirmed_by", user.id);
 
   return count ?? 0;
+}
+
+export async function getMyConfirmationsForTasks(
+  taskIds: string[]
+): Promise<TaskConfirmation[]> {
+  if (taskIds.length === 0) return [];
+
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("confirmations")
+    .select("task_id, confirmed_by, profiles:confirmed_by(display_name)")
+    .in("task_id", taskIds);
+
+  return (data ?? []).map((c) => ({
+    task_id: c.task_id,
+    confirmed_by: c.confirmed_by,
+    confirmerName:
+      (c.profiles as { display_name: string } | null)?.display_name ??
+      "Someone",
+  }));
 }
 
 export async function getConfirmationsForTasks(taskIds: string[]) {

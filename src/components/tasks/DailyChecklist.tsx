@@ -2,6 +2,7 @@ import { format } from "date-fns";
 import { TaskCheckbox } from "./TaskCheckbox";
 import { isGoalActiveOnDate } from "@/lib/utils/days";
 import type { Database } from "@/types/database";
+import type { TaskConfirmation } from "@/lib/queries/confirmations";
 
 type Goal = Database["public"]["Tables"]["goals"]["Row"];
 type Task = Database["public"]["Tables"]["tasks"]["Row"];
@@ -15,14 +16,25 @@ const rowColors = [
   "bg-rose-50/60 dark:bg-rose-900/15",
 ];
 
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
+
 export function DailyChecklist({
   date,
   goals,
   tasks,
+  confirmations = [],
 }: {
   date: Date;
   goals: Goal[];
   tasks: Task[];
+  confirmations?: TaskConfirmation[];
 }) {
   const dateStr = format(date, "yyyy-MM-dd");
   const activeGoals = goals.filter((g) =>
@@ -53,6 +65,10 @@ export function DailyChecklist({
         const task = tasks.find(
           (t) => t.goal_id === goal.id && t.date === dateStr
         );
+        const taskConfirmations = task
+          ? confirmations.filter((c) => c.task_id === task.id)
+          : [];
+
         return (
           <div
             key={goal.id}
@@ -63,7 +79,25 @@ export function DailyChecklist({
               date={dateStr}
               initialCompleted={task?.completed ?? false}
             />
-            <span className="text-sm font-medium">{goal.title}</span>
+            <span className="flex-1 text-sm font-medium">{goal.title}</span>
+            {taskConfirmations.length > 0 && (
+              <div className="flex items-center gap-1" title={taskConfirmations.map((c) => c.confirmerName).join(", ")}>
+                {taskConfirmations.slice(0, 3).map((c) => (
+                  <span
+                    key={c.confirmed_by}
+                    className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/20 text-[9px] font-bold text-primary"
+                    title={c.confirmerName}
+                  >
+                    {getInitials(c.confirmerName)}
+                  </span>
+                ))}
+                {taskConfirmations.length > 3 && (
+                  <span className="text-[10px] text-muted-foreground">
+                    +{taskConfirmations.length - 3}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         );
       })}

@@ -6,6 +6,7 @@ import { CalendarView } from "./CalendarView";
 import { DailyChecklist } from "./DailyChecklist";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Database } from "@/types/database";
+import type { TaskConfirmation } from "@/lib/queries/confirmations";
 
 type Goal = Database["public"]["Tables"]["goals"]["Row"];
 type Task = Database["public"]["Tables"]["tasks"]["Row"];
@@ -13,10 +14,12 @@ type Task = Database["public"]["Tables"]["tasks"]["Row"];
 export function TaskCalendarPage({
   goals,
   tasks,
+  confirmations = [],
   rightColumnExtra,
 }: {
   goals: Goal[];
   tasks: Task[];
+  confirmations?: TaskConfirmation[];
   rightColumnExtra?: React.ReactNode;
 }) {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -41,6 +44,7 @@ export function TaskCalendarPage({
               date={selectedDate}
               goals={goals}
               tasks={tasks}
+              confirmations={confirmations}
             />
           </CardContent>
         </Card>
