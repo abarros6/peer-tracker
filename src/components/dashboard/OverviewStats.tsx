@@ -42,7 +42,7 @@ export function OverviewStats({
 
   if (compact) {
     return (
-      <div className="flex items-center gap-6 overflow-x-auto rounded-xl bg-card p-3 px-5 border">
+      <div className="flex items-center gap-4 overflow-x-auto rounded-xl bg-card px-4 py-2.5 border sm:gap-6 sm:px-5 sm:py-3">
         {stats.map((stat) => {
           const isStreak = stat.label === "Best Streak";
           const streakHighlight = isStreak && longestStreak >= 7;

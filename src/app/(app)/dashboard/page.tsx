@@ -125,12 +125,12 @@ export default async function DashboardPage() {
     : 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">
+        <h2 className="text-xl font-bold tracking-tight sm:text-2xl">
           {getStreakGreeting(longestStreak, profile?.display_name ?? null, today)}
         </h2>
-        <p className="text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           {format(today, "EEEE, MMMM d, yyyy")}
         </p>
       </div>
@@ -141,6 +141,7 @@ export default async function DashboardPage() {
         todayTotal={todayGoals.length}
         longestStreak={longestStreak}
         confirmations={confirmationCount}
+        compact
       />
 
       {goals.length === 0 ? (
